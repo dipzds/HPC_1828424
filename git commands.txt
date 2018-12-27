@@ -1,0 +1,6 @@
+echo "# PythonAssignment"
+git init
+git add answers.ipynb
+git commit -m "first commit"
+git remote add origin https://github.com/dipzds/PythonAssignment.git
+git push -u origin master
