@@ -91,11 +91,38 @@ static void key_pressed(unsigned char key, int x, int y) {
   }
 }
 
+int time_difference(struct timespec *start, struct timespec *finish,
+                    long long int *difference) {
+  long long int ds =  finish->tv_sec - start->tv_sec;
+  long long int dn =  finish->tv_nsec - start->tv_nsec;
+
+  if(dn < 0 ) {
+    ds--;
+    dn += 1000000000;
+  }
+  *difference = ds * 1000000000 + dn;
+  return !(*difference > 0);
+}
+
+
 int main(int argc, char **argv) {
+  
+  struct timespec start, finish;
+  long long int difference;  
+  int account = 0;
+  clock_gettime(CLOCK_MONOTONIC, &start);
+
   signal(SIGINT, sigint_callback);
  
   printf("image dimensions %dx%d\n", width, height);
   detect_edges(image, results);
+
+  //getting time elapsed
+  clock_gettime(CLOCK_MONOTONIC, &finish);
+  time_difference(&start, &finish, &difference);
+
+  printf("Elapsed time %9.5lfs\n", difference/1000000000.0);
+
 
   glutInit(&argc, argv);
   glutInitWindowSize(width * 2,height);

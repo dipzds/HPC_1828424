@@ -5,6 +5,7 @@
 #include <GL/gl.h>
 #include <malloc.h>
 #include <signal.h>
+#include <pthread.h>
 
 /******************************************************************************
   Displays two grey scale images. On the left is an image that has come from an 
@@ -28,7 +29,18 @@
 #define width 100 
 #define height 72
 
+typedef struct arguments_t {
+  int start;
+  int stride;
+}arguments_t;
+
+
 unsigned char image[], results[width * height];
+
+
+void *edge_detector(arguments_t *args){
+    detect_edges(image,results);
+
 
 void detect_edges(unsigned char *in, unsigned char *out) {
   int i;
@@ -116,6 +128,7 @@ int main(int argc, char **argv) {
 
   signal(SIGINT, sigint_callback);
  
+
   //declaring 4 posix threads
   pthread_t t1, t2, t3, t4;
 
