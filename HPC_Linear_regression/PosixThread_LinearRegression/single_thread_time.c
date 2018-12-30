@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 
 /******************************************************************************
  * This program takes an initial estimate of m and c and finds the associated 
@@ -45,7 +46,31 @@ double rms_error(double m, double c) {
   return sqrt(mean);
 }
 
+
+int time_difference(struct timespec *start, struct timespec *finish,
+                    long long int *difference) {
+  long long int ds =  finish->tv_sec - start->tv_sec;
+  long long int dn =  finish->tv_nsec - start->tv_nsec;
+
+  if(dn < 0 ) {
+    ds--;
+    dn += 1000000000;
+  }
+  *difference = ds * 1000000000 + dn;
+  return !(*difference > 0);
+}
+
+
 int main() {
+
+  struct timespec start, finish;
+  long long int difference;  
+  
+  clock_gettime(CLOCK_MONOTONIC, &start);
+ 
+
+
+
   int i;
   double bm = 1.3;
   double bc = 10;
@@ -88,6 +113,12 @@ int main() {
     }
   }
   printf("minimum m,c is %lf,%lf with error %lf\n", bm, bc, be);
+
+
+  clock_gettime(CLOCK_MONOTONIC, &finish);
+  time_difference(&start, &finish, &difference);
+
+  printf("The time elapsed was %9.5lfs\n", difference/1.0e9);
 
   return 0;
 }

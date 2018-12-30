@@ -1,0 +1,5 @@
+guess1 ==> slope = 1.4, intercept =  50.55
+				     
+guess2 ==> slope = 1.5, intercept = 34.67
+		 
+guess3 ==> slope = 1.15, intercept = 13.45
