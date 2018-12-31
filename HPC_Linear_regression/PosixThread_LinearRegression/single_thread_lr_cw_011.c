@@ -11,10 +11,10 @@
  * a gradient search for a minimum in mc-space.
  * 
  * To compile:
- *   cc -o lr_coursework lr_coursework.c -lm
+ *   cc -o single_thread_lr_cw_011 single_thread_lr_cw_011.c -lm
  * 
  * To run:
- *   ./lr_coursework
+ *   ./single_thread_lr_cw_011
  * 
  * Dr Kevan Buckley, University of Wolverhampton, 2018
  *****************************************************************************/
