@@ -5,6 +5,7 @@
 #include <GL/gl.h>
 #include <malloc.h>
 #include <signal.h>
+#include <pthread.h>
 
 /******************************************************************************
   Displays two grey scale images. On the left is an image that has come from an 
@@ -21,7 +22,7 @@
       the pixel data type.
     
   To compile adapt the code below wo match your filenames:  
-    cc -o ip_coursework ip_coursework.c -lglut -lGL -lm 
+    cc -o ip_coursework_011_multi_thread ip_coursework_011_multi_thread.c -lglut -lGL -lm -pthread
    
   Dr Kevan Buckley, University of Wolverhampton, 2018
 ******************************************************************************/
@@ -30,11 +31,61 @@
 
 unsigned char image[], results[width * height];
 
-void detect_edges(unsigned char *in, unsigned char *out) {
+typedef struct arguments {
+  unsigned char *input;
+  unsigned char *output;
+  int start;
+  int stride;
+}args_t;
+
+void find_the_edges(unsigned char *image,unsigned char *results) {
+  pthread_t t1, t2, t3, t4;
+
+  args_t t1_arguments;
+  t1_arguments.start = 0;
+  t1_arguments.stride = 4;
+  t1_arguments.input = image;
+  t1_arguments.output = results;
+
+
+  args_t t2_arguments;
+  t2_arguments.start = 1;
+  t2_arguments.stride = 4;
+  t2_arguments.input = image;
+  t2_arguments.output = results;
+
+  args_t t3_arguments;
+  t3_arguments.start = 2;
+  t3_arguments.stride = 4;
+  t3_arguments.input = image;
+  t3_arguments.output = results;
+
+  args_t t4_arguments;
+  t4_arguments.start = 3;
+  t4_arguments.stride = 4;
+  t4_arguments.input = image;
+  t4_arguments.output = results;
+
+  void *detect_edges();
+  
+  pthread_create(&t1, NULL, detect_edges, &t1_arguments);
+  pthread_create(&t2, NULL, detect_edges, &t2_arguments);
+  pthread_create(&t3, NULL, detect_edges, &t3_arguments);
+  pthread_create(&t4, NULL, detect_edges, &t4_arguments);
+
+  pthread_join(t1, NULL);
+  pthread_join(t2, NULL);
+  pthread_join(t3, NULL);
+  pthread_join(t4, NULL);
+}
+
+void *detect_edges(args_t *args) {
   int i;
+  unsigned char *in = args->input;
+  unsigned char *out = args->output;
   int n_pixels = width * height;
 
-  for(i=0;i<n_pixels;i++) {
+  for(i=args->start;i<n_pixels;i+=args->stride) {
     int x, y; // the pixel of interest
     int b, d, f, h; // the pixels adjacent to x,y used for the calculation
     int r; // the result of calculate
@@ -91,50 +142,46 @@ static void key_pressed(unsigned char key, int x, int y) {
   }
 }
 
-int time_difference(struct timespec *start, struct timespec *finish,
+int time_difference(struct timespec *start, struct timespec *finish, 
                     long long int *difference) {
-  long long int ds =  finish->tv_sec - start->tv_sec;
-  long long int dn =  finish->tv_nsec - start->tv_nsec;
+  long long int ds =  finish->tv_sec - start->tv_sec; 
+  long long int dn =  finish->tv_nsec - start->tv_nsec; 
 
   if(dn < 0 ) {
     ds--;
-    dn += 1000000000;
-  }
+    dn += 1000000000; 
+  } 
   *difference = ds * 1000000000 + dn;
   return !(*difference > 0);
 }
 
-
 int main(int argc, char **argv) {
-  
-  struct timespec start, finish;
-  long long int difference;  
-  int account = 0;
-  clock_gettime(CLOCK_MONOTONIC, &start);
-
   signal(SIGINT, sigint_callback);
+
+  struct timespec start, finish;   
+  long long int time_elapsed;
+
+  clock_gettime(CLOCK_MONOTONIC, &start);
  
   printf("image dimensions %dx%d\n", width, height);
-  detect_edges(image, results);
+  find_the_edges(image, results);
 
-  //getting time elapsed
-  clock_gettime(CLOCK_MONOTONIC, &finish);
-  time_difference(&start, &finish, &difference);
-
-  printf("Elapsed time %9.5lfs\n", difference/1000000000.0);
+  clock_gettime(CLOCK_MONOTONIC, &finish); 
+  time_difference(&start, &finish, &time_elapsed);
+  printf("Time elapsed was %lldns which is equivalent to %0.9lfs\n", time_elapsed,
+         (time_elapsed/1.0e9));
 
 
   glutInit(&argc, argv);
   glutInitWindowSize(width * 2,height);
   glutInitDisplayMode(GLUT_SINGLE | GLUT_LUMINANCE);
       
-  glutCreateWindow("6CS005 Image Progessing Courework");
+  glutCreateWindow("6CS005 Image Processing Coursework");
   glutDisplayFunc(display);
   glutKeyboardFunc(key_pressed);
   glClearColor(0.0, 1.0, 0.0, 1.0); 
 
   glutMainLoop(); 
-
   tidy_and_exit();
   
   return 0;

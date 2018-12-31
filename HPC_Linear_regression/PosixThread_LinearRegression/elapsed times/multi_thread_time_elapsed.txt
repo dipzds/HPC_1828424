@@ -1,0 +1,11 @@
+Time elapsed was   0.63666s
+Time elapsed was   0.64946s
+Time elapsed was   0.65041s
+Time elapsed was   0.60064s
+Time elapsed was   0.64468s
+Time elapsed was   0.64149s
+Time elapsed was   0.63587s
+Time elapsed was   0.63788s
+Time elapsed was   0.66242s
+Time elapsed was   0.64158s
+

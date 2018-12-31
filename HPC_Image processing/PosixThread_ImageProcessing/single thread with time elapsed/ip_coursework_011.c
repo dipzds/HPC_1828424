@@ -5,7 +5,6 @@
 #include <GL/gl.h>
 #include <malloc.h>
 #include <signal.h>
-#include <pthread.h>
 
 /******************************************************************************
   Displays two grey scale images. On the left is an image that has come from an 
@@ -22,25 +21,14 @@
       the pixel data type.
     
   To compile adapt the code below wo match your filenames:  
-    cc -o ip_coursework ip_coursework.c -lglut -lGL -lm 
+    cc -o ip_coursework_011 ip_coursework_011.c -lglut -lGL -lm 
    
   Dr Kevan Buckley, University of Wolverhampton, 2018
 ******************************************************************************/
 #define width 100 
 #define height 72
 
-typedef struct arguments_t {
-  int start;
-  int stride;
-}arguments_t;
-
-
 unsigned char image[], results[width * height];
-
-
-void *edge_detector(arguments_t *args){
-    detect_edges(image,results);
-
 
 void detect_edges(unsigned char *in, unsigned char *out) {
   int i;
@@ -103,78 +91,44 @@ static void key_pressed(unsigned char key, int x, int y) {
   }
 }
 
-
-//function time difference to compute the elapsed time
 int time_difference(struct timespec *start, struct timespec *finish,
                     long long int *difference) {
-  long long int ds =  finish->tv_sec - start->tv_sec; 
-  long long int dn =  finish->tv_nsec - start->tv_nsec; 
+  long long int ds =  finish->tv_sec - start->tv_sec;
+  long long int dn =  finish->tv_nsec - start->tv_nsec;
 
   if(dn < 0 ) {
     ds--;
-    dn += 1000000000; 
-  } 
+    dn += 1000000000;
+  }
   *difference = ds * 1000000000 + dn;
   return !(*difference > 0);
 }
 
-int main(int argc, char **argv) {
 
+int main(int argc, char **argv) {
+  
   struct timespec start, finish;
-  long long int difference;   
+  long long int time_elapsed;  
   int account = 0;
   clock_gettime(CLOCK_MONOTONIC, &start);
 
-
   signal(SIGINT, sigint_callback);
  
-
-  //declaring 4 posix threads
-  pthread_t t1, t2, t3, t4;
-
-  arguments_t t1_arguments;
-  t1_arguments.start = 0;
-  t1_arguments.stride = 4;
-
-  arguments_t t2_arguments;
-  t2_arguments.start = 1;
-  t2_arguments.stride = 4;
-
-  arguments_t t3_arguments;
-  t3_arguments.start = 2;
-  t3_arguments.stride = 4;
-
-  arguments_t t4_arguments;
-  t4_arguments.start = 3;
-  t4_arguments.stride = 4;
-
-  //pthread creation
-  pthread_create(&t1, NULL, edge_detector, &t1_arguments);
-  pthread_create(&t2, NULL, edge_detector, &t2_arguments);
-  pthread_create(&t3, NULL, edge_detector, &t3_arguments);
-  pthread_create(&t4, NULL, edge_detector, &t4_arguments);
-
-  //joining pthread
-  pthread_join(t1, NULL);
-  pthread_join(t2, NULL);
-  pthread_join(t3, NULL);
-  pthread_join(t4, NULL);
-
-  //getting real time and time difference to compute time taken for execution
-  clock_gettime(CLOCK_MONOTONIC, &finish);
-  time_difference(&start, &finish, &difference);
-
-  printf("Elapsed time %9.5lfs\n", difference/1000000000.0);
-
-
   printf("image dimensions %dx%d\n", width, height);
   detect_edges(image, results);
+
+  //getting time elapsed
+  clock_gettime(CLOCK_MONOTONIC, &finish);
+  time_difference(&start, &finish, &time_elapsed);
+  printf("Time elapsed was %lldns which is equivalent to %0.9lfs\n", time_elapsed,
+         (time_elapsed/1.0e9));
+
 
   glutInit(&argc, argv);
   glutInitWindowSize(width * 2,height);
   glutInitDisplayMode(GLUT_SINGLE | GLUT_LUMINANCE);
       
-  glutCreateWindow("6CS005 Image Progessing Courework");
+  glutCreateWindow("6CS005 Image Processing Coursework");
   glutDisplayFunc(display);
   glutKeyboardFunc(key_pressed);
   glClearColor(0.0, 1.0, 0.0, 1.0); 

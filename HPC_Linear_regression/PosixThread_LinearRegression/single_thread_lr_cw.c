@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <math.h>
-#include <pthread.h>
 #include <time.h>
 
 /******************************************************************************
@@ -12,27 +11,13 @@
  * a gradient search for a minimum in mc-space.
  * 
  * To compile:
- *   cc -o multi_thread_lr_cw_011 multi_thread_lr_cw_011.c -lm -pthread
+ *   cc -o single_thread_lr_cw single_thread_lr_cw.c -lm
  * 
  * To run:
- *   ./multi_thread_lr_cw_011
+ *   ./single_thread_lr_cw
  * 
  * Dr Kevan Buckley, University of Wolverhampton, 2018
  *****************************************************************************/
-
-double bm = 1.3;
-double bc = 10;
-double be;
-double dm[8];
-double dc[8];
-double e[8];
-double step = 0.01;
-double best_error = 999999999;
-int best_error_i;
-int minimum_found = 0;
-double om[] = {0,1,1, 1, 0,-1,-1,-1};
-double oc[] = {1,1,0,-1,-1,-1, 0, 1};
-
 
 typedef struct point_t {
   double x;
@@ -47,8 +32,6 @@ double residual_error(double x, double y, double m, double c) {
   return e * e;
 }
 
-
-
 double rms_error(double m, double c) {
   int i;
   double mean;
@@ -61,65 +44,66 @@ double rms_error(double m, double c) {
   mean = error_sum / n_data;
   
   return sqrt(mean);
-} 
-
-void *lr_thread_function(void *args){
-
-  int *a = args;
-  int i = *a;
- 
-  //printf("\n i in thread fun=%d", i);
-  dm[i] = bm + (om[i] * step);
-  dc[i] = bc + (oc[i] * step); 
-
-  e[i] = rms_error(dm[i], dc[i]);
-  if(e[i] < best_error) {
-        best_error = e[i];
-        best_error_i = i;
-  pthread_exit(NULL);
-  }
 }
 
 
-  
-int time_difference(struct timespec *start, struct timespec *finish, 
+int time_difference(struct timespec *start, struct timespec *finish,
                     long long int *difference) {
-  long long int ds =  finish->tv_sec - start->tv_sec; 
-  long long int dn =  finish->tv_nsec - start->tv_nsec; 
+  long long int ds =  finish->tv_sec - start->tv_sec;
+  long long int dn =  finish->tv_nsec - start->tv_nsec;
 
   if(dn < 0 ) {
     ds--;
-    dn += 1000000000; 
-  } 
+    dn += 1000000000;
+  }
   *difference = ds * 1000000000 + dn;
   return !(*difference > 0);
 }
 
 
-
 int main() {
-  int i;
-  
-  struct timespec start, finish;
-  long long int difference;   
 
-  clock_gettime(CLOCK_MONOTONIC, &start);
-  pthread_t lr_threads[8];
+  struct timespec start, finish;
+  long long int difference;  
   
+  clock_gettime(CLOCK_MONOTONIC, &start);
+ 
+
+
+
+  int i;
+  double bm = 1.3;
+  double bc = 10;
+  double be;
+  double dm[8];
+  double dc[8];
+  double e[8];
+  double step = 0.01;
+  double best_error = 999999999;
+  int best_error_i;
+  int minimum_found = 0;
+  
+  double om[] = {0,1,1, 1, 0,-1,-1,-1};
+  double oc[] = {1,1,0,-1,-1,-1, 0, 1};
+
   be = rms_error(bm, bc);
 
   while(!minimum_found) {
-   
-      for(i=0;i<8;i++) {
-        pthread_create(&lr_threads[i], NULL, (void*)lr_thread_function, &i);
-	
-	pthread_join(lr_threads[i], NULL);
-    
+    for(i=0;i<8;i++) {
+      dm[i] = bm + (om[i] * step);
+      dc[i] = bc + (oc[i] * step);    
+    }
+      
+    for(i=0;i<8;i++) {
+      e[i] = rms_error(dm[i], dc[i]);
+      if(e[i] < best_error) {
+        best_error = e[i];
+        best_error_i = i;
+      }
     }
 
     printf("best m,c is %lf,%lf with error %lf in direction %d\n", 
-    dm[best_error_i], dc[best_error_i], best_error, best_error_i);
-
+      dm[best_error_i], dc[best_error_i], best_error, best_error_i);
     if(best_error < be) {
       be = best_error;
       bm = dm[best_error_i];
@@ -129,12 +113,13 @@ int main() {
     }
   }
   printf("minimum m,c is %lf,%lf with error %lf\n", bm, bc, be);
-  
+
+
   clock_gettime(CLOCK_MONOTONIC, &finish);
   time_difference(&start, &finish, &difference);
-  
-  printf("Time elapsed was %9.5lfs\n", difference/1000000000.0);
- 
+
+  printf("The time elapsed was %9.5lfs\n", difference/1.0e9);
+
   return 0;
 }
 
